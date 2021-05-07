@@ -1,4 +1,4 @@
-package main
+package watchdog
 
 import (
 	"context"
