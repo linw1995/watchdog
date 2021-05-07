@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/exec"
 	"testing"
+	"time"
 )
 
 type dummyProcess struct {
@@ -91,6 +92,53 @@ func TestSniffing(t *testing.T) {
 	sleeper.AwakeOnce()
 	want = false
 	got = <-resultChannel
+	if got != want {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestWaitSniffed(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	dog := newDogWithControl(false)
+	sleeper := newSleeperWithControl()
+
+	doneChannel := WaitSniffed(ctx, dog, sleeper)
+	want := false
+	var got bool
+	select {
+	case <-doneChannel:
+		got = true
+	default:
+		got = false
+	}
+	if got != want {
+		t.Errorf("got %v, want %v", got, want)
+	}
+
+	for i := 0; i < 10; i++ {
+		sleeper.AwakeOnce()
+		select {
+		case <-doneChannel:
+			got = true
+		default:
+			got = false
+		}
+		if got != want {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	}
+
+	dog.Sniffed()
+	sleeper.AwakeOnce()
+	want = true
+	select {
+	case <-doneChannel:
+		got = true
+	case <-time.After(1 * time.Second):
+		got = false
+	}
 	if got != want {
 		t.Errorf("got %v, want %v", got, want)
 	}
