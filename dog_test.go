@@ -44,7 +44,7 @@ func (s *sleeperWithControl) Sleep() {
 	<-s.controlChannel
 }
 
-func (s *sleeperWithControl) Awake() {
+func (s *sleeperWithControl) AwakeOnce() {
 	s.controlChannel <- nil
 }
 
@@ -88,7 +88,7 @@ func TestSniffing(t *testing.T) {
 	}
 
 	dog.Unsniffed()
-	sleeper.Awake()
+	sleeper.AwakeOnce()
 	want = false
 	got = <-resultChannel
 	if got != want {
@@ -136,7 +136,7 @@ func TestProcessAliveDog(t *testing.T) {
 		}
 
 		dp.Stop()
-		sleeper.Awake()
+		sleeper.AwakeOnce()
 
 		want = false
 		got = <-isProcessAliveChannel
