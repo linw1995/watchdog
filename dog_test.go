@@ -97,7 +97,7 @@ func TestSniffing(t *testing.T) {
 	}
 }
 
-func TestWaitSniffed(t *testing.T) {
+func TestWaitSniffing(t *testing.T) {
 	tryReceive := func(channel chan interface{}, wait time.Duration) bool {
 		if wait > 0 {
 			select {
