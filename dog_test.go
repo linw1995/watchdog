@@ -98,49 +98,67 @@ func TestSniffing(t *testing.T) {
 }
 
 func TestWaitSniffed(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	dog := newDogWithControl(false)
-	sleeper := newSleeperWithControl()
-
-	doneChannel := WaitSniffed(ctx, dog, sleeper)
-	want := false
-	var got bool
-	select {
-	case <-doneChannel:
-		got = true
-	default:
-		got = false
+	type SubTestParam struct {
+		Description string
+		InitFlag    bool
+		Target      func(context.Context, Dog, Sleeper) chan interface{}
 	}
-	if got != want {
-		t.Errorf("got %v, want %v", got, want)
+	subTestParams := [...]SubTestParam{
+		{"Test WaitSniffed", false, WaitSniffed},
+		{"Test WaitUnsniffed", true, WaitUnSniffed},
 	}
+	for _, param := range subTestParams {
+		t.Run(param.Description, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
-	for i := 0; i < 10; i++ {
-		sleeper.AwakeOnce()
-		select {
-		case <-doneChannel:
-			got = true
-		default:
-			got = false
-		}
-		if got != want {
-			t.Errorf("got %v, want %v", got, want)
-		}
-	}
+			dog := newDogWithControl(param.InitFlag)
+			sleeper := newSleeperWithControl()
 
-	dog.Sniffed()
-	sleeper.AwakeOnce()
-	want = true
-	select {
-	case <-doneChannel:
-		got = true
-	case <-time.After(1 * time.Second):
-		got = false
-	}
-	if got != want {
-		t.Errorf("got %v, want %v", got, want)
+			doneChannel := param.Target(ctx, dog, sleeper)
+			want := false
+			var got bool
+			select {
+			case <-doneChannel:
+				got = true
+			default:
+				got = false
+			}
+			if got != want {
+				t.Errorf("got %v, want %v", got, want)
+			}
+
+			for i := 0; i < 10; i++ {
+				sleeper.AwakeOnce()
+				select {
+				case <-doneChannel:
+					got = true
+				default:
+					got = false
+				}
+				if got != want {
+					t.Errorf("got %v, want %v", got, want)
+				}
+			}
+
+			if param.InitFlag {
+				dog.Unsniffed()
+			} else {
+				dog.Sniffed()
+			}
+			sleeper.AwakeOnce()
+			want = true
+			select {
+			case <-doneChannel:
+				got = true
+			case <-time.After(1 * time.Second):
+				got = false
+			}
+			if got != want {
+				t.Errorf("got %v, want %v", got, want)
+			}
+
+		})
 	}
 }
 

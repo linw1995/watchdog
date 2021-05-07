@@ -27,8 +27,8 @@ func Sniffing(ctx context.Context, dog Dog, sleeper Sleeper, resultChannel chan 
 	}
 }
 
-// Keep sniffing and wait sniffed
-func WaitSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{} {
+// Keep sniffing until expected result received
+func WaitSniffResult(ctx context.Context, dog Dog, sleeper Sleeper, result bool) chan interface{} {
 	resultChannel := make(chan interface{})
 	sniffResultChannel := make(chan bool)
 	sniffingCtx, cancel := context.WithCancel(ctx)
@@ -37,7 +37,7 @@ func WaitSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{}
 		for {
 			select {
 			case sniffed := <-sniffResultChannel:
-				if sniffed {
+				if sniffed == result {
 					resultChannel <- nil
 					return
 				}
@@ -48,6 +48,17 @@ func WaitSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{}
 	}(sniffResultChannel, resultChannel, sniffingCtx, cancel)
 	go Sniffing(sniffingCtx, dog, sleeper, sniffResultChannel)
 	return resultChannel
+
+}
+
+// Keep sniffing until sniffed
+func WaitSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{} {
+	return WaitSniffResult(ctx, dog, sleeper, true)
+}
+
+// Keep sniffing until unsinffed
+func WaitUnSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{} {
+	return WaitSniffResult(ctx, dog, sleeper, false)
 }
 
 // Dog for checking if process is alive or not via its Pid.
