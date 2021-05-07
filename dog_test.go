@@ -36,13 +36,12 @@ func newDummyProcess(name string, args ...string) *dummyProcess {
 	return &dummyProcess{cmd: exec.Command(name, args...)}
 }
 
-
 type sleeperWithControl struct {
 	controlChannel chan interface{}
 }
 
 func (s *sleeperWithControl) Sleep() {
-	<- s.controlChannel
+	<-s.controlChannel
 }
 
 func (s *sleeperWithControl) Awake() {
