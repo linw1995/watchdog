@@ -213,3 +213,13 @@ func TestProcessAliveDog(t *testing.T) {
 
 	})
 }
+
+func BenchmarkProcessAliveDogSniff(b *testing.B) {
+	dp := newDummyProcess("sleep", "3600")
+	dp.Start()
+	dog := NewProcessAliveDog(dp.Pid())
+	for i := 0; i < b.N; i++ {
+		dog.Sniff()
+	}
+	dp.Stop()
+}
