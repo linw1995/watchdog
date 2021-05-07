@@ -4,7 +4,6 @@ import (
 	"context"
 	"os/exec"
 	"testing"
-	"time"
 )
 
 type dummyProcess struct {
@@ -37,6 +36,23 @@ func newDummyProcess(name string, args ...string) *dummyProcess {
 	return &dummyProcess{cmd: exec.Command(name, args...)}
 }
 
+
+type sleeperWithControl struct {
+	controlChannel chan interface{}
+}
+
+func (s *sleeperWithControl) Sleep() {
+	<- s.controlChannel
+}
+
+func (s *sleeperWithControl) Awake() {
+	s.controlChannel <- nil
+}
+
+func newSleeperWithControl() *sleeperWithControl {
+	return &sleeperWithControl{controlChannel: make(chan interface{})}
+}
+
 func TestProcessAliveDog(t *testing.T) {
 	t.Run("Check if process is alive or not via its Pid", func(t *testing.T) {
 		dp := newDummyProcess("sleep", "60")
@@ -67,7 +83,8 @@ func TestProcessAliveDog(t *testing.T) {
 		defer cancel()
 		isProcessAliveChannel := make(chan bool)
 
-		go dog.Sniffing(ctx, 1*time.Second, isProcessAliveChannel)
+		sleeper := newSleeperWithControl()
+		go dog.Sniffing(ctx, sleeper, isProcessAliveChannel)
 
 		want := true
 		got := <-isProcessAliveChannel
@@ -76,6 +93,7 @@ func TestProcessAliveDog(t *testing.T) {
 		}
 
 		dp.Stop()
+		sleeper.Awake()
 
 		want = false
 		got = <-isProcessAliveChannel

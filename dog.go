@@ -4,8 +4,11 @@ import (
 	"context"
 	"os"
 	"syscall"
-	"time"
 )
+
+type Sleeper interface {
+	Sleep()
+}
 
 // Dog for checking if process is alive or not via its Pid.
 type ProcessAliveDog struct {
@@ -20,7 +23,7 @@ func (dog ProcessAliveDog) Sniff() bool {
 }
 
 // Keep checking if process is alive or not via its Pid.
-func (dog ProcessAliveDog) Sniffing(ctx context.Context, internal time.Duration, resultChannel chan bool) {
+func (dog ProcessAliveDog) Sniffing(ctx context.Context, sleeper Sleeper, resultChannel chan bool) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -28,7 +31,7 @@ func (dog ProcessAliveDog) Sniffing(ctx context.Context, internal time.Duration,
 		default:
 			resultChannel <- dog.Sniff()
 		}
-		time.Sleep(internal)
+		sleeper.Sleep()
 	}
 }
 
