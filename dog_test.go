@@ -98,6 +98,23 @@ func TestSniffing(t *testing.T) {
 }
 
 func TestWaitSniffed(t *testing.T) {
+	tryReceive := func(channel chan interface{}, wait time.Duration) bool {
+		if wait > 0 {
+			select {
+			case <-channel:
+				return true
+			case <-time.After(wait):
+				return false
+			}
+		} else {
+			select {
+			case <-channel:
+				return true
+			default:
+				return false
+			}
+		}
+	}
 	type SubTestParam struct {
 		Description string
 		InitFlag    bool
@@ -117,25 +134,14 @@ func TestWaitSniffed(t *testing.T) {
 
 			doneChannel := param.Target(ctx, dog, sleeper)
 			want := false
-			var got bool
-			select {
-			case <-doneChannel:
-				got = true
-			default:
-				got = false
-			}
+			got := tryReceive(doneChannel, 0)
 			if got != want {
 				t.Errorf("got %v, want %v", got, want)
 			}
 
 			for i := 0; i < 10; i++ {
 				sleeper.AwakeOnce()
-				select {
-				case <-doneChannel:
-					got = true
-				default:
-					got = false
-				}
+				got = tryReceive(doneChannel, 0)
 				if got != want {
 					t.Errorf("got %v, want %v", got, want)
 				}
@@ -148,12 +154,7 @@ func TestWaitSniffed(t *testing.T) {
 			}
 			sleeper.AwakeOnce()
 			want = true
-			select {
-			case <-doneChannel:
-				got = true
-			case <-time.After(1 * time.Second):
-				got = false
-			}
+			got = tryReceive(doneChannel, 1*time.Second)
 			if got != want {
 				t.Errorf("got %v, want %v", got, want)
 			}
