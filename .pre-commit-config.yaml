@@ -1,0 +1,5 @@
+repos:
+-   repo: https://github.com/golangci/golangci-lint
+    rev: 5c6adb63c963907c9199c93ee1284c0045489625
+    hooks:
+    -   id: golangci-lint
