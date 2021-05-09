@@ -21,3 +21,5 @@ jobs:
       run: go build -v ./...
     - name: Test
       run: make test/full
+    - name: Upload coverage to Codecov
+      run: bash <(curl -s https://codecov.io/bash) -f coverage.out
