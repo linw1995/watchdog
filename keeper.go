@@ -5,34 +5,36 @@ import (
 	"fmt"
 )
 
-type DogHandle struct {
+type dogHandle struct {
 	dog     Dog
 	channel chan bool
 	Cancel  context.CancelFunc
 }
 
+// Keeper runs and collects SniffedEvents of multi-dogs.
 type Keeper struct {
-	name2DogHandle map[string]*DogHandle
+	name2DogHandle map[string]*dogHandle
 
 	ctx    context.Context
 	Cancel context.CancelFunc
 }
 
+// Event for Dog.Sniff() result of specific Dog.
 type SniffedEvent struct {
-	dog     string
-	sniffed bool
+	Dog     string
+	Sniffed bool
 }
 
 func (k *Keeper) String() string {
 	return "&Keeper{}"
 }
 
-// Flag repressents the Keeper is running.
+// Running repressents the Keeper is running.
 func (k *Keeper) Running() bool {
 	return k.ctx != nil
 }
 
-// Keeper keeps dogs for sniffing.
+// Keep for letting dogs sniffing.
 func (k *Keeper) Keep(name string, dog Dog) error {
 	if k.Running() {
 		// TODO: allow to add more dogs
@@ -43,11 +45,11 @@ func (k *Keeper) Keep(name string, dog Dog) error {
 	if ok {
 		return fmt.Errorf("%v already has Dog which name = %v", k, name)
 	}
-	k.name2DogHandle[name] = &DogHandle{dog: dog, channel: make(chan bool)}
+	k.name2DogHandle[name] = &dogHandle{dog: dog, channel: make(chan bool)}
 	return nil
 }
 
-// Keeper runs and collects SniffedEvent from dogs sniffing.
+// Run for collecting SniffedEvent from dogs sniffing.
 func (k *Keeper) Run(ctx context.Context, sleeper Sleeper) (<-chan SniffedEvent, error) {
 	if k.Running() {
 		return nil, fmt.Errorf("%v is already running", k)
@@ -59,7 +61,7 @@ func (k *Keeper) Run(ctx context.Context, sleeper Sleeper) (<-chan SniffedEvent,
 		for {
 			select {
 			case sniffed := <-target:
-				result <- SniffedEvent{dog: name, sniffed: sniffed}
+				result <- SniffedEvent{Dog: name, Sniffed: sniffed}
 			case <-ctx.Done():
 				return
 			}
@@ -76,5 +78,5 @@ func (k *Keeper) Run(ctx context.Context, sleeper Sleeper) (<-chan SniffedEvent,
 }
 
 func NewKeeper() *Keeper {
-	return &Keeper{name2DogHandle: make(map[string]*DogHandle)}
+	return &Keeper{name2DogHandle: make(map[string]*dogHandle)}
 }
