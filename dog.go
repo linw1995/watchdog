@@ -42,6 +42,7 @@ func WaitSniffResult(ctx context.Context, dog Dog, sleeper Sleeper, result bool)
 					return
 				}
 			case <-sniffingCtx.Done():
+				close(resultChannel)
 				return
 			}
 		}

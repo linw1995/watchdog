@@ -98,69 +98,84 @@ func TestSniffing(t *testing.T) {
 }
 
 func TestWaitSniffing(t *testing.T) {
-	tryReceive := func(channel chan interface{}, wait time.Duration) bool {
-		if wait > 0 {
-			select {
-			case <-channel:
-				return true
-			case <-time.After(wait):
-				return false
-			}
-		} else {
-			select {
-			case <-channel:
-				return true
-			default:
-				return false
+	t.Run("WaitSniffing Success", func(t *testing.T) {
+		tryReceive := func(channel chan interface{}, wait time.Duration) bool {
+			if wait > 0 {
+				select {
+				case <-channel:
+					return true
+				case <-time.After(wait):
+					return false
+				}
+			} else {
+				select {
+				case <-channel:
+					return true
+				default:
+					return false
+				}
 			}
 		}
-	}
-	type SubTestParam struct {
-		Description string
-		InitFlag    bool
-		Target      func(context.Context, Dog, Sleeper) chan interface{}
-	}
-	subTestParams := [...]SubTestParam{
-		{"Test WaitSniffed", false, WaitSniffed},
-		{"Test WaitUnsniffed", true, WaitUnSniffed},
-	}
-	for _, param := range subTestParams {
-		t.Run(param.Description, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+		type SubTestParam struct {
+			Description string
+			InitFlag    bool
+			Target      func(context.Context, Dog, Sleeper) chan interface{}
+		}
+		subTestParams := [...]SubTestParam{
+			{"Test WaitSniffed", false, WaitSniffed},
+			{"Test WaitUnsniffed", true, WaitUnSniffed},
+		}
+		for _, param := range subTestParams {
+			t.Run(param.Description, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
 
-			dog := newDogWithControl(param.InitFlag)
-			sleeper := newSleeperWithControl()
+				dog := newDogWithControl(param.InitFlag)
+				sleeper := newSleeperWithControl()
 
-			doneChannel := param.Target(ctx, dog, sleeper)
-			want := false
-			got := tryReceive(doneChannel, 0)
-			if got != want {
-				t.Errorf("got %v, want %v", got, want)
-			}
-
-			for i := 0; i < 10; i++ {
-				sleeper.AwakeOnce()
-				got = tryReceive(doneChannel, 0)
+				doneChannel := param.Target(ctx, dog, sleeper)
+				want := false
+				got := tryReceive(doneChannel, 0)
 				if got != want {
 					t.Errorf("got %v, want %v", got, want)
 				}
-			}
 
-			if param.InitFlag {
-				dog.Unsniffed()
-			} else {
-				dog.Sniffed()
-			}
-			sleeper.AwakeOnce()
-			want = true
-			got = tryReceive(doneChannel, 1*time.Second)
-			if got != want {
-				t.Errorf("got %v, want %v", got, want)
-			}
+				for i := 0; i < 10; i++ {
+					sleeper.AwakeOnce()
+					got = tryReceive(doneChannel, 0)
+					if got != want {
+						t.Errorf("got %v, want %v", got, want)
+					}
+				}
 
-		})
-	}
+				if param.InitFlag {
+					dog.Unsniffed()
+				} else {
+					dog.Sniffed()
+				}
+				sleeper.AwakeOnce()
+				want = true
+				got = tryReceive(doneChannel, 1*time.Second)
+				if got != want {
+					t.Errorf("got %v, want %v", got, want)
+				}
+			})
+		}
+	})
+
+	t.Run("WaitSniffing Cancel", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		resultChancel := WaitSniffResult(ctx, newDummyDog(), newDummySleeper(), false)
+		cancel()
+		select {
+		case _, more := <-resultChancel:
+			if more {
+				t.Fatal("WaitSniffResult non-stop")
+			}
+		case <-time.After(1 * time.Second):
+			t.Fatal("WaitSniffResult stop timeout")
+		}
+	})
 }
 
 func TestProcessAliveDog(t *testing.T) {
