@@ -20,4 +20,4 @@ jobs:
     - name: Build
       run: go build -v ./...
     - name: Test
-      run: make fulltest
+      run: make test/full
