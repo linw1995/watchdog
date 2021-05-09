@@ -17,5 +17,5 @@ test/cover/html: test/cover
 
 .PHONY: test/full
 test/full:
-	$(GOTEST) -v -bench=. -coverprofile=coverage.out ./...
+	$(GOTEST) -v -bench=. -coverprofile=coverage.out -race ./...
 	$(GOCOVER) -func=coverage.out

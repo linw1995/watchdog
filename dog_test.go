@@ -3,6 +3,7 @@ package watchdog
 import (
 	"context"
 	"os/exec"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -54,23 +55,25 @@ func newSleeperWithControl() *sleeperWithControl {
 }
 
 type dogWithControl struct {
-	flag bool
+	flag atomic.Value
 }
 
 func (dog *dogWithControl) Sniff() bool {
-	return dog.flag
+	return dog.flag.Load().(bool)
 }
 
 func (dog *dogWithControl) Sniffed() {
-	dog.flag = true
+	dog.flag.Store(true)
 }
 
 func (dog *dogWithControl) Unsniffed() {
-	dog.flag = false
+	dog.flag.Store(false)
 }
 
 func newDogWithControl(initFlag bool) *dogWithControl {
-	return &dogWithControl{flag: initFlag}
+	dog := &dogWithControl{}
+	dog.flag.Store(initFlag)
+	return dog
 }
 
 func TestSniffing(t *testing.T) {
