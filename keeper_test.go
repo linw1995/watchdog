@@ -82,10 +82,10 @@ func TestRun(t *testing.T) {
 		select {
 		case event := <-resultChannel:
 			if event.dog != "bar" || !event.sniffed {
-				t.Fatalf("Recieved unknown SniffedEvent %v", event)
+				t.Fatalf("Received unknown SniffedEvent %v", event)
 			}
 		case <-time.After(1 * time.Second):
-			t.Fatal("Wait SniffedEvent recieved timeout")
+			t.Fatal("Wait SniffedEvent received timeout")
 		}
 	})
 }
