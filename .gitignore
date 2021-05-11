@@ -76,3 +76,6 @@ flycheck_*.el
 /Godeps/
 
 # End of https://www.toptal.com/developers/gitignore/api/go,emacs
+### Emacs persp-mode ###
+.persp-confs
+
