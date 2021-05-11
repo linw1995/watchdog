@@ -32,7 +32,11 @@ func WaitSniffResult(ctx context.Context, dog Dog, sleeper Sleeper, result bool)
 	resultChannel := make(chan interface{})
 	sniffResultChannel := make(chan bool)
 	sniffingCtx, cancel := context.WithCancel(ctx)
-	go func(sniffResultChannel chan bool, resultChannel chan interface{}, sniffingCtx context.Context, cancel context.CancelFunc) {
+	go func(sniffResultChannel chan bool,
+		resultChannel chan interface{},
+		sniffingCtx context.Context,
+		cancel context.CancelFunc,
+	) {
 		defer cancel()
 		for {
 			select {

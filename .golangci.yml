@@ -11,3 +11,7 @@ linters:
     - varcheck
     - gofmt
     - goimports
+    - lll
+linters-settings:
+  lll:
+    line-length: 120
