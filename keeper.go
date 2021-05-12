@@ -19,7 +19,7 @@ type Keeper struct {
 	Cancel context.CancelFunc
 }
 
-// Event for Dog.Sniff() result of specific Dog.
+// SniffedEvent represents the Dog.Sniff() result of specific Dog.
 type SniffedEvent struct {
 	Dog     string
 	Sniffed bool
@@ -77,6 +77,7 @@ func (k *Keeper) Run(ctx context.Context, sleeper Sleeper) (<-chan SniffedEvent,
 	return resultChannel, nil
 }
 
+// NewKeeper returns a new Keeper for keeping amount of dogs.
 func NewKeeper() *Keeper {
 	return &Keeper{name2DogHandle: make(map[string]*dogHandle)}
 }

@@ -6,15 +6,17 @@ import (
 	"syscall"
 )
 
+// Sleeper for controling the delay duration.
 type Sleeper interface {
 	Sleep()
 }
 
+// Dog for monitoring specific status changes.
 type Dog interface {
 	Sniff() bool
 }
 
-// Keep sniffing
+// Sniffing forever.
 func Sniffing(ctx context.Context, dog Dog, sleeper Sleeper, resultChannel chan bool) {
 	for {
 		select {
@@ -27,7 +29,7 @@ func Sniffing(ctx context.Context, dog Dog, sleeper Sleeper, resultChannel chan 
 	}
 }
 
-// Keep sniffing until expected result received
+// WaitSniffResult keeps sniffing until expected result received.
 func WaitSniffResult(ctx context.Context, dog Dog, sleeper Sleeper, result bool) chan interface{} {
 	resultChannel := make(chan interface{})
 	sniffResultChannel := make(chan bool)
@@ -56,29 +58,29 @@ func WaitSniffResult(ctx context.Context, dog Dog, sleeper Sleeper, result bool)
 
 }
 
-// Keep sniffing until sniffed
+// WaitSniffed keeps sniffing until sniffed.
 func WaitSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{} {
 	return WaitSniffResult(ctx, dog, sleeper, true)
 }
 
-// Keep sniffing until unsinffed
+// WaitUnSniffed keeps sniffing until unsinffed.
 func WaitUnSniffed(ctx context.Context, dog Dog, sleeper Sleeper) chan interface{} {
 	return WaitSniffResult(ctx, dog, sleeper, false)
 }
 
-// Dog for checking if process is alive or not via its Pid.
+// ProcessAliveDog for checking if process is alive or not via its Pid.
 type ProcessAliveDog struct {
 	Pid int
 }
 
-// Check if process is alive or not via its Pid.
+// Sniff checks if process is alive or not via its Pid.
 func (dog ProcessAliveDog) Sniff() bool {
 	p, _ := os.FindProcess(dog.Pid)
 	err := p.Signal(syscall.Signal(0))
 	return err == nil
 }
 
-// Create a ProcessAliveDog via the Pid of a process it is watching.
+// NewProcessAliveDog creates a ProcessAliveDog via the Pid of a process it is watching.
 func NewProcessAliveDog(pid int) *ProcessAliveDog {
 	return &ProcessAliveDog{Pid: pid}
 }
