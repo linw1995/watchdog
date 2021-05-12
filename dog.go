@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-// Sleeper for controling the delay duration.
+// Sleeper for controlling the delay duration.
 type Sleeper interface {
 	Sleep()
 }

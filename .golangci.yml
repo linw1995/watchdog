@@ -13,9 +13,12 @@ linters:
     - goimports
     - lll
     - golint
+    - misspell
 linters-settings:
   lll:
     line-length: 120
+  misspell:
+    locale: US
 issues:
   include:
     - EXC0002 # disable excluding of issues about comments from golint
